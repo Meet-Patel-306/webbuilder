@@ -15,3 +15,7 @@ pnpm dev
 # or
 bun dev
 ```
+
+### How SubDomain Work
+
+If user try to access subdomain like `www.subdoamin.example.com` website rewrite it to `www.example.com/subdomain/`.We create dynamite rotuing for this `/[domain]/[path]`.
