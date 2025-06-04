@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 import "./globals.css";
+import { ThemeProvider } from "@/provider/theme-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,12 +27,16 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider appearance={{ baseTheme: dark }}>
-      <html lang="en">
-        <body
-          // className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-          className="theme-custom dark:theme-custom-dark"
-        >
-          {children}
+      <html lang="en" suppressContentEditableWarning>
+        <body>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>
