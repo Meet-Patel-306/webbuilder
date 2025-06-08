@@ -1,15 +1,15 @@
 "use server";
 
-import { currentUser, clerkClient } from "@clerk/nextjs/server";
+import { currentUser, clerkClient, User } from "@clerk/nextjs/server";
 import db from "./db";
 import { redirect } from "next/navigation";
-import { Agency, Invitation, User } from "@/generated/prisma";
+import { Role, Invitation } from "@/generated/prisma";
 
 type UserType = {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role: Role;
   createdAt: Date;
   updatedAt: Date;
   agencyId: string;
@@ -32,7 +32,7 @@ export const getUserData = async () => {
       Agency: {
         // Include associated agency
         include: {
-          SidebarOption: true, // Include agency's sidebar options
+          AgencySidebarOption: true, // Include agency's sidebar options
           SubAccount: {
             // Include all subaccounts under the agency
             include: {
@@ -41,7 +41,7 @@ export const getUserData = async () => {
           },
         },
       },
-      Permissions: true, // Also include the user's permissions
+      permission: true, // Also include the user's permissions
     },
   });
   if (!userData) {
@@ -78,7 +78,7 @@ const saveActivityLogAsNotification = async ({
   // if user not logging find user data
   if (!user) {
     // we need user data form particular agency subaccount
-    const res = await db.user.findUnique({
+    const res = await db.user.findFirst({
       where: {
         Agency: { SubAccount: { some: { id: subaccountId } } },
       },
@@ -89,7 +89,7 @@ const saveActivityLogAsNotification = async ({
   } // if user logging
   else {
     const res = await db.user.findUnique({
-      where: user?.emailAddresses[0].emailAddress,
+      where: { email: user?.emailAddresses[0].emailAddress },
     });
     if (res) {
       userData = res;
@@ -164,7 +164,7 @@ export const verifyUserExistOrAgencyInvitationExist = async () => {
       const userData = await createUser({
         name: `${user.firstName ?? ""} ${user.lastName ?? ""}`,
         email: user.emailAddresses[0].emailAddress,
-        role: invitationExist.role,
+        role: invitationExist.role || undefined,
         createdAt: new Date(),
         updatedAt: new Date(),
         agencyId: invitationExist.agencyId,
@@ -203,6 +203,7 @@ export const verifyUserExistOrAgencyInvitationExist = async () => {
         email: user.emailAddresses[0].emailAddress,
       },
     });
+    console.log("au : ", agencyUser);
     if (agencyUser) {
       return agencyUser.agencyId;
     } else {
