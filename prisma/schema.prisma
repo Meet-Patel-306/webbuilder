@@ -118,6 +118,7 @@ model Agency {
   AgencySidebarOption AgencySidebarOption[]
   // Extra paid features that an agency can add.
   AddOns              AddOns[]
+  whiteLabel          Boolean               @default(true)
 }
 
 model SubAccount {

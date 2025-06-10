@@ -1,3 +1,4 @@
+import AgencyDetails from "@/components/form/AgencyDetails";
 import { Plan } from "@/generated/prisma";
 import {
   verifyUserExistOrAgencyInvitationExist,
@@ -36,8 +37,7 @@ export default async function Page({
   }
   return (
     <>
-      {" "}
-      <h1>hdjk</h1>
+      <AgencyDetails />
     </>
   );
 }
