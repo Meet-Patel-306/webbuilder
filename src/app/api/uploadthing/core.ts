@@ -22,7 +22,7 @@ export const ourFileRouter = {
     // Set permissions and file types for this FileRoute
     .middleware(authUser)
     .onUploadComplete(() => {}),
-  subAccountLogo: f({
+  subaccountLogo: f({
     image: {
       maxFileSize: "4MB",
       maxFileCount: 1,

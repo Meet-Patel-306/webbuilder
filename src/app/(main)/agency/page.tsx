@@ -32,12 +32,10 @@ export default async function Page({
         return redirect(`/agency/${agencyId}`);
       }
     }
-  } else {
-    return <div>not auth</div>;
   }
   return (
     <>
-      <AgencyDetails />
+      <AgencyDetails data={{ agencyEmail: "no@gmail.com" }} />
     </>
   );
 }

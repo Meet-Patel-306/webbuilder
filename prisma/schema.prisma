@@ -101,7 +101,7 @@ model Agency {
   address             String
   city                String
   state               String
-  contry              String
+  country             String
   zipcode             String
   // all user to agency
   User                User[]
@@ -132,7 +132,7 @@ model SubAccount {
   address          String
   city             String
   state            String
-  contry           String
+  country          String
   zipcode          String
   goal             Int                       @default(5)
   agencyId         String

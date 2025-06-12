@@ -3,7 +3,7 @@
 import { currentUser, clerkClient, User } from "@clerk/nextjs/server";
 import db from "./db";
 import { redirect } from "next/navigation";
-import { Role, Invitation } from "@/generated/prisma";
+import { Role, Invitation, Agency } from "@/generated/prisma";
 
 type UserType = {
   id: string;
@@ -64,7 +64,7 @@ const createUser = async (user: UserType) => {
 };
 
 // saving a notification and activicy log in the database, typically when a user performs some action within an agency or its sub-account
-const saveActivityLogAsNotification = async ({
+export const saveActivityLogAsNotification = async ({
   agencyId,
   subaccountId,
   description,
@@ -210,4 +210,20 @@ export const verifyUserExistOrAgencyInvitationExist = async () => {
       return null;
     }
   }
+};
+// update agency details
+export const updateAgencyDetails = async (
+  agencyId: string,
+  agencyDetails: Partial<Agency>
+) => {
+  const res = db.agency.update({
+    where: { id: agencyId },
+    data: { ...agencyDetails },
+  });
+  return res;
+};
+// delete acengy
+export const deleteAgency = async (agencyId: string) => {
+  const res = await db.agency.delete({ where: { id: agencyId } });
+  return res;
 };
