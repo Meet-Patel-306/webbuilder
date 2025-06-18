@@ -16,6 +16,9 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   const pathWithSearchParams = `${pathname}?${
     searchParams ? `${searchParams}` : ""
   }`;
+  if (req.nextUrl.pathname.startsWith("/api/uploadthing")) {
+    return;
+  }
   //  if subdomain exists
   // ex:- www.project.exmple.com/xyz-path?searchParams
   // sundomain:- project

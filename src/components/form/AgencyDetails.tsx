@@ -1,9 +1,12 @@
 "use client";
 
+import { v4 as uuid4 } from "uuid";
 import {
   updateAgencyDetails,
   saveActivityLogAsNotification,
   deleteAgency,
+  initUser,
+  upsertAgency,
 } from "@/lib/queries";
 import { useRouter } from "next/navigation";
 import { Agency } from "@/generated/prisma";
@@ -76,7 +79,7 @@ export default function AgencyDetails({ data }: props) {
       address: data?.address ?? "",
       city: data?.city ?? "",
       state: data?.state ?? "",
-      country: data?.contry ?? "",
+      country: data?.country ?? "",
       zipcode: data?.zipcode ?? "",
       whiteLabel: false,
     },
@@ -84,10 +87,39 @@ export default function AgencyDetails({ data }: props) {
 
   const isLoading = form.formState.isSubmitting;
 
+  const handleSubmit = async (value: z.infer<typeof formSchema>) => {
+    try {
+      await initUser({ role: "AGENCY_OWNER" });
+      const res = await upsertAgency({
+        name: value.name,
+        id: data?.id ? data.id : uuid4(),
+        connectAccountId: "",
+        agencyEmail: value.agencyEmail,
+        agencyPhone: value.agencyPhone,
+        agencyLogo: value.agencyLogo,
+        address: value.address,
+        city: value.city,
+        state: value.state,
+        country: value.country,
+        zipcode: value.zipcode,
+        goal: 5,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        whiteLabel: value.whiteLabel,
+      });
+      console.log(res);
+      return router.refresh();
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
   const handleDeleteAgency = () => {
+    if (!data?.id) return;
     toast.promise(
       async () => {
         await deleteAgency(data?.id as string);
+        return router.refresh();
       },
       {
         loading: "Deleting Agency...",
@@ -114,12 +146,12 @@ export default function AgencyDetails({ data }: props) {
             <CardContent>
               <Form {...form}>
                 <form
-                  onSubmit={form.handleSubmit(() => {})}
+                  onSubmit={form.handleSubmit(handleSubmit)}
                   className="space-y-8"
                 >
                   <FormField
                     control={form.control}
-                    name="name"
+                    name="agencyLogo"
                     disabled={isLoading}
                     render={({ field }) => (
                       <FormItem>
@@ -328,50 +360,57 @@ export default function AgencyDetails({ data }: props) {
                   )}
                 </form>
               </Form>
-              <div className="border-2 p-2 border-red-700 rounded-md mt-2 bg-red-700/25">
-                <div className="text-red-700">Danger Zon</div>
-                <div className="text-muted-foreground">
-                  Deleting your agency cann't be undone. This will also delete
-                  all sub accounts and all data related to your sub accounts.
-                  Sub accounts will no longer have access to funnels, contacts
-                  etc.
-                </div>
-                <AlertDialogTrigger className="mt-2 ">
-                  <Button className="bg-red-700 text-white hover:bg-red-700">
-                    Delete Agency
-                  </Button>
-                </AlertDialogTrigger>
-              </div>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete
-                    your account and remove your data from our servers.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <div className="mt-4 space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    Please type <strong>Delete Account</strong> to confirm:
-                  </p>
-                  <Input
-                    value={confirmation}
-                    onChange={(e) => setConfirmation(e.target.value)}
-                    placeholder="Type here..."
-                  />
-                </div>
+              {data?.id && (
+                <div>
+                  <div className="border-2 p-2 border-red-700 rounded-md mt-2 bg-red-700/25">
+                    <div className="text-red-700">Danger Zon</div>
+                    <div className="text-muted-foreground">
+                      Deleting your agency cann't be undone. This will also
+                      delete all sub accounts and all data related to your sub
+                      accounts. Sub accounts will no longer have access to
+                      funnels, contacts etc.
+                    </div>
+                    <AlertDialogTrigger className="mt-2 ">
+                      <Button className="bg-red-700 text-white hover:bg-red-700">
+                        Delete Agency
+                      </Button>
+                    </AlertDialogTrigger>
+                  </div>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Are you absolutely sure?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently
+                        delete your account and remove your data from our
+                        servers.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="mt-4 space-y-2">
+                      <p className="text-sm text-muted-foreground">
+                        Please type <strong>Delete Account</strong> to confirm:
+                      </p>
+                      <Input
+                        value={confirmation}
+                        onChange={(e) => setConfirmation(e.target.value)}
+                        placeholder="Type here..."
+                      />
+                    </div>
 
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    className="bg-red-700 text-white hover:bg-red-700"
-                    disabled={!(confirmation === "Delete Account")}
-                    onClick={handleDeleteAgency}
-                  >
-                    Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-red-700 text-white hover:bg-red-700"
+                        disabled={!(confirmation === "Delete Account")}
+                        onClick={handleDeleteAgency}
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </div>
+              )}
             </CardContent>
           </Card>
         </AlertDialog>

@@ -1,9 +1,9 @@
 "use server";
 
-import { currentUser, clerkClient, User } from "@clerk/nextjs/server";
+import { currentUser, clerkClient } from "@clerk/nextjs/server";
 import db from "./db";
 import { redirect } from "next/navigation";
-import { Role, Invitation, Agency } from "@/generated/prisma";
+import { Role, Invitation, Agency, User, Plan } from "@/generated/prisma";
 
 type UserType = {
   id: string;
@@ -226,4 +226,95 @@ export const updateAgencyDetails = async (
 export const deleteAgency = async (agencyId: string) => {
   const res = await db.agency.delete({ where: { id: agencyId } });
   return res;
+};
+// create user as owner or base on data
+export const initUser = async (newUserData: Partial<User>) => {
+  const user = await currentUser();
+  if (!user) return;
+  try {
+    // upsert :-> "If the record exists — update it.If it doesn’t — create it."
+    const userData = await db.user.upsert({
+      where: {
+        email: user.emailAddresses[0].emailAddress,
+      },
+      update: {
+        ...newUserData,
+      },
+      create: {
+        email: user.emailAddresses[0].emailAddress,
+        name: `${user.firstName} ${user.lastName}`,
+        role: newUserData?.role || "SUBACCOUNT_USER",
+        avatar: user.imageUrl,
+        id: user.id,
+      },
+    });
+    const client = await clerkClient();
+    await client.users.updateUserMetadata(user.id, {
+      privateMetadata: {
+        role: newUserData.role || "SUBACCOUNT_USER",
+      },
+    });
+    return userData;
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+//craete agency if not exist or update agency if exist
+export const upsertAgency = async (agency: Agency, price?: Plan) => {
+  if (!agency.agencyEmail) return null;
+  try {
+    const agencyData = await db.agency.upsert({
+      where: {
+        id: agency.id,
+      },
+      update: {
+        ...agency,
+      },
+      create: {
+        // connect agency with user
+        User: {
+          connect: { email: agency.agencyEmail },
+        },
+        ...agency,
+        AgencySidebarOption: {
+          create: [
+            {
+              name: "Dashboard",
+              icon: "category",
+              link: `/agency/${agency.id}`,
+            },
+            {
+              name: "Launchpad",
+              icon: "clipboardIcon",
+              link: `/agency/${agency.id}/launchpad`,
+            },
+            {
+              name: "Billing",
+              icon: "payment",
+              link: `/agency/${agency.id}/billing`,
+            },
+            {
+              name: "Settings",
+              icon: "settings",
+              link: `/agency/${agency.id}/settings`,
+            },
+            {
+              name: "Sub Accounts",
+              icon: "person",
+              link: `/agency/${agency.id}/all-subaccounts`,
+            },
+            {
+              name: "Team",
+              icon: "shield",
+              link: `/agency/${agency.id}/team`,
+            },
+          ],
+        },
+      },
+    });
+    return agencyData;
+  } catch (e) {
+    console.log(e);
+  }
 };

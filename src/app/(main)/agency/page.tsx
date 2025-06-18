@@ -31,6 +31,8 @@ export default async function Page({
       else {
         return redirect(`/agency/${agencyId}`);
       }
+    } else {
+      return <div>UnAuth</div>;
     }
   }
   return (
