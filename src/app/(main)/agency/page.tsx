@@ -12,6 +12,7 @@ export default async function Page({
   searchParam: { plan: Plan; state: string; code: string };
 }) {
   const agencyId = await verifyUserExistOrAgencyInvitationExist();
+  console.log("AGENCY ID: ", agencyId);
   const user = await getUserData();
 
   if (agencyId) {
@@ -37,7 +38,7 @@ export default async function Page({
   }
   return (
     <>
-      <AgencyDetails data={{ agencyEmail: "no@gmail.com" }} />
+      <AgencyDetails data={{ agencyEmail: "hackermtpt@gmail.com" }} />
     </>
   );
 }

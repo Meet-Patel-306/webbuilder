@@ -49,6 +49,7 @@ import { Loader2Icon } from "lucide-react";
 import { NumberInput } from "@tremor/react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTransition } from "react";
 
 type props = {
   data: Partial<Agency>;
@@ -65,9 +66,12 @@ const formSchema = z.object({
   zipcode: z.string().min(1),
   whiteLabel: z.boolean(),
 });
+
 export default function AgencyDetails({ data }: props) {
   const router = useRouter();
   const [confirmation, setConfirmation] = useState("");
+  const [isLoading, startTransition] = useTransition();
+
   const form = useForm<z.infer<typeof formSchema>>({
     mode: "onChange",
     resolver: zodResolver(formSchema),
@@ -81,37 +85,45 @@ export default function AgencyDetails({ data }: props) {
       state: data?.state ?? "",
       country: data?.country ?? "",
       zipcode: data?.zipcode ?? "",
-      whiteLabel: false,
+      whiteLabel: data?.whiteLabel ?? false,
     },
   });
 
-  const isLoading = form.formState.isSubmitting;
-
   const handleSubmit = async (value: z.infer<typeof formSchema>) => {
-    try {
-      await initUser({ role: "AGENCY_OWNER" });
-      const res = await upsertAgency({
-        name: value.name,
-        id: data?.id ? data.id : uuid4(),
-        connectAccountId: "",
-        agencyEmail: value.agencyEmail,
-        agencyPhone: value.agencyPhone,
-        agencyLogo: value.agencyLogo,
-        address: value.address,
-        city: value.city,
-        state: value.state,
-        country: value.country,
-        zipcode: value.zipcode,
-        goal: 5,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        whiteLabel: value.whiteLabel,
-      });
-      console.log(res);
-      return router.refresh();
-    } catch (e) {
-      console.log(e);
-    }
+    startTransition(() => {
+      try {
+        toast.promise(
+          async () => {
+            await initUser({ role: "AGENCY_OWNER" });
+            const res = await upsertAgency({
+              name: value.name,
+              id: data?.id ? data.id : uuid4(),
+              connectAccountId: "",
+              agencyEmail: value.agencyEmail,
+              agencyPhone: value.agencyPhone,
+              agencyLogo: value.agencyLogo,
+              address: value.address,
+              city: value.city,
+              state: value.state,
+              country: value.country,
+              zipcode: value.zipcode,
+              goal: 5,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              whiteLabel: value.whiteLabel,
+            });
+            return router.refresh();
+          },
+          {
+            loading: "Processing Agency data...",
+            success: "Agency create or update Successfully",
+            error: "Something wrong with server...",
+          }
+        );
+      } catch (err) {
+        console.log(err);
+      }
+    });
   };
 
   const handleDeleteAgency = () => {
@@ -128,6 +140,7 @@ export default function AgencyDetails({ data }: props) {
       }
     );
   };
+
   return (
     <>
       <section className="flex justify-center mt-10">
@@ -152,7 +165,6 @@ export default function AgencyDetails({ data }: props) {
                   <FormField
                     control={form.control}
                     name="agencyLogo"
-                    disabled={isLoading}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Agency Logo</FormLabel>
@@ -172,7 +184,6 @@ export default function AgencyDetails({ data }: props) {
                   <FormField
                     control={form.control}
                     name="name"
-                    disabled={isLoading}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Agency Name</FormLabel>
@@ -190,7 +201,6 @@ export default function AgencyDetails({ data }: props) {
                   <FormField
                     control={form.control}
                     name="agencyEmail"
-                    disabled={isLoading}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Agency Email</FormLabel>
@@ -209,7 +219,6 @@ export default function AgencyDetails({ data }: props) {
                   <FormField
                     control={form.control}
                     name="agencyPhone"
-                    disabled={isLoading}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Agency Phone</FormLabel>
@@ -225,7 +234,6 @@ export default function AgencyDetails({ data }: props) {
                     )}
                   />
                   <FormField
-                    disabled={isLoading}
                     control={form.control}
                     name="whiteLabel"
                     render={({ field }) => {
@@ -253,7 +261,6 @@ export default function AgencyDetails({ data }: props) {
                   <FormField
                     control={form.control}
                     name="address"
-                    disabled={isLoading}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Address</FormLabel>
@@ -268,7 +275,6 @@ export default function AgencyDetails({ data }: props) {
                     <FormField
                       control={form.control}
                       name="country"
-                      disabled={isLoading}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Country</FormLabel>
@@ -282,7 +288,6 @@ export default function AgencyDetails({ data }: props) {
                     <FormField
                       control={form.control}
                       name="state"
-                      disabled={isLoading}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>State</FormLabel>
@@ -296,7 +301,6 @@ export default function AgencyDetails({ data }: props) {
                     <FormField
                       control={form.control}
                       name="city"
-                      disabled={isLoading}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>City</FormLabel>
@@ -310,7 +314,6 @@ export default function AgencyDetails({ data }: props) {
                     <FormField
                       control={form.control}
                       name="zipcode"
-                      disabled={isLoading}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Zipcode</FormLabel>
@@ -354,9 +357,7 @@ export default function AgencyDetails({ data }: props) {
                       <Loader2Icon className="animate-spin" /> Please wait
                     </Button>
                   ) : (
-                    <Button type="submit" disabled={isLoading}>
-                      Save Agency Information
-                    </Button>
+                    <Button type="submit">Save Agency Information</Button>
                   )}
                 </form>
               </Form>

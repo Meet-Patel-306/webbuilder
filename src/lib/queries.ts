@@ -256,21 +256,21 @@ export const initUser = async (newUserData: Partial<User>) => {
     });
     return userData;
   } catch (e) {
-    console.log(e);
+    console.log("rrtygyh");
   }
 };
 
 //craete agency if not exist or update agency if exist
 export const upsertAgency = async (agency: Agency, price?: Plan) => {
-  if (!agency.agencyEmail) return null;
+  if (!agency.agencyEmail) {
+    return null;
+  }
   try {
     const agencyData = await db.agency.upsert({
       where: {
         id: agency.id,
       },
-      update: {
-        ...agency,
-      },
+      update: agency,
       create: {
         // connect agency with user
         User: {
@@ -314,7 +314,8 @@ export const upsertAgency = async (agency: Agency, price?: Plan) => {
       },
     });
     return agencyData;
-  } catch (e) {
-    console.log(e);
+  } catch (err) {
+    // console.error("Prisma error while upserting agency:", err);
+    throw err;
   }
 };
