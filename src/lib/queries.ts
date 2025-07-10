@@ -3,7 +3,14 @@
 import { currentUser, clerkClient } from "@clerk/nextjs/server";
 import db from "./db";
 import { redirect } from "next/navigation";
-import { Role, Invitation, Agency, User, Plan } from "@/generated/prisma";
+import {
+  Role,
+  Invitation,
+  Agency,
+  User,
+  Plan,
+  SubAccount,
+} from "@/generated/prisma";
 
 type UserType = {
   id: string;
@@ -318,4 +325,16 @@ export const upsertAgency = async (agency: Agency, price?: Plan) => {
     // console.error("Prisma error while upserting agency:", err);
     throw err;
   }
+};
+
+export const upsertSubAccount = async (subaccount: SubAccount) => {
+  if (!subaccount.agencyEmail) return null;
+  const agencyOwner = await db.user.findFirst({
+    where: {
+      Agency: {
+        id: subaccount.agencyId,
+      },
+      role: "AGENCY_OWNER",
+    },
+  });
 };

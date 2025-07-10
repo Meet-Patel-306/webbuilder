@@ -127,7 +127,7 @@ model SubAccount {
   name             String
   subAccountLogo   String                    @db.Text
   agencyEmail      String
-  agencyLogo       String                    @db.Text
+  agencyPhone      String
   address          String
   city             String
   state            String
